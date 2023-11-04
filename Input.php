@@ -2,27 +2,15 @@
 
 class Input
 {
-    public string $int;
 
     public function parcing(string $parceString)
     {
-        $regexp = "/\s+/";
-        $visual = preg_replace($regexp, '', $parceString);
-
-        $regexp = "/\·|\×/";
-        $visual = preg_replace($regexp, '*', $visual);
-
-        $regexp = "/:/";
-        $visual = preg_replace($regexp, '/', $visual);
-
-        $regexp = "/=/";
-        $visual = preg_replace($regexp, '', $visual);
-
-        $regexp = "/\)\(/";
-        $visual = preg_replace($regexp, ')*(', $visual);
-
-        $regexp = "/\d+\*0/";
-        $visual = preg_replace($regexp, '0', $visual);
+        $visual = preg_replace("/\s+/", '', $parceString);
+        $visual = preg_replace("/\·|\×/", '*', $visual);
+        $visual = preg_replace("/:/", '/', $visual);
+        $visual = preg_replace("/=/", '', $visual);
+        $visual = preg_replace("/\)\(/", ')*(', $visual);
+        $visual = preg_replace("/\d+\*0/", '0', $visual);
 
         while(preg_match('/\(\-?\d+\)/', $visual))
         {
@@ -34,11 +22,8 @@ class Input
             $visual = str_replace($pattern, $exp[0], $visual);
         }
 
-        $regexp = "/\-\-/";
-        $visual = preg_replace($regexp, '+', $visual);
-
-        $regexp = "/\+\-|\-\+/";
-        $visual = preg_replace($regexp, '-', $visual);
+        $visual = preg_replace("/\-\-/", '+', $visual);
+        $visual = preg_replace("/\+\-|\-\+/", '-', $visual);
 
         $regexp = "/[^\d^\+^\-^\*^\/^\(^\)^\.]/";
         if(preg_match($regexp, $visual))
@@ -47,14 +32,9 @@ class Input
             return "Ошибка! присутствует неизвестный символ: ".$error[0];
         }
 
-        $regexp = "/\(\)/";
-        $visual = preg_replace($regexp, '', $visual);
-
-        $regexp = "/^[^\-^\d^\(]/";
-        $visual = preg_replace($regexp, '', $visual);
-
-        $regexp = "/[^\)^\d]*$/";
-        $visual = preg_replace($regexp, '', $visual);
+        $visual = preg_replace("/\(\)/", '', $visual);
+        $visual = preg_replace("/^[^\-^\d^\(]/", '', $visual);
+        $visual = preg_replace("/[^\)^\d]*$/", '', $visual);
 
         while (true){
             if (preg_match("/\(.*?\)/", $visual))
@@ -74,7 +54,7 @@ class Input
         {
             if (preg_match("/^\-?\d+[\+\-\*\/].*$/", $visual))
             {
-                $visual = $this->parsingWithoutStaples($visual);
+                $visual = $this->match($visual);
             } else {
                 break;
             }
@@ -126,70 +106,38 @@ class Input
             {
                 $exp[0] = $this->parsingStaples($exp[0]);
             }
-            while(preg_match("/\-?\d+[\+\-\*\/]\d+/", $exp[0]))
+
+            $exp[0] = $this->match($exp[0]);
+
+            if (preg_match("/^\-?\d+$/", $exp[0]))
             {
-                if (preg_match("/\d+[\*\/]\d+/", $exp[0]))
-                {
-                    preg_match("/\d+[\*\/]\d+/", $exp[0], $match);
-                } else {
-                    preg_match("/\-?\d+[\+\-]\d+/", $exp[0], $match);
-                }
-                preg_match_all("/\-?\d+|\d+/", $match[0], $numbers);
-                preg_match_all("/[\+\-\*\/]/", $match[0], $operators);
-                if (isset($operators[0][1]))
-                {
-                    $operator = $operators[0][1];
-                } else {
-                    $operator = $operators[0][0];
-                }
-                switch ($operator)
-                {
-                    case '+':
-                        $answer = $this->summ($numbers[0][0], $numbers[0][1]);
-                        break;
-                    case '-':
-                        $answer = $this->subtraction($numbers[0][0], $numbers[0][1]);
-                        break;
-                    case '*':
-                        $answer = $this->multiplication($numbers[0][0], $numbers[0][1]);
-                        break;
-                    case '/':
-                        $answer = $this->division($numbers[0][0], $numbers[0][1]);
-                        break;
-                }
-                $exp[0] = str_replace($match[0], $answer, $exp[0]);
-                if (preg_match("/^\-?\d+$/", $exp[0]))
-                {
-                    $visual=str_replace($pattern, $exp[0], $visual);
-                    break;
-                }
+                $visual=str_replace($pattern, $exp[0], $visual);
+                break;
             }
-        }
-        while(preg_match("/\-\-/", $visual))
-        {
-            $visual = preg_replace('/--/', '+', $visual);
         }
         return $visual;
     }
 
-    public function parsingWithoutStaples(string $visual)
+    public function match($matches)
     {
-        while (preg_match("/\-?\d+[\+\-\*\/]/", $visual))
+        while(preg_match("/\-?\d+[\+\-\*\/]\d+/", $matches))
         {
-            if (preg_match("/\-?\d+[\*\/]\d+/", $visual))
+            if (preg_match("/\d+[\*\/]\d+/", $matches))
             {
-                preg_match("/\-?\d+[\*\/]\d+/", $visual, $match);
+                preg_match("/\d+[\*\/]\d+/", $matches, $match);
             } else {
-                preg_match("/^\-?\d+[\+\-]\d+/", $visual, $match);
+                preg_match("/\-?\d+[\+\-]\d+/", $matches, $match);
             }
-            preg_match_all("/^\-?\d+|\d+/", $match[0], $numbers);
+            preg_match_all("/\-?\d+|\d+/", $match[0], $numbers);
             preg_match_all("/[\+\-\*\/]/", $match[0], $operators);
-            if (isset($operators[0][1])) {
+            if (isset($operators[0][1]))
+            {
                 $operator = $operators[0][1];
             } else {
                 $operator = $operators[0][0];
             }
-            switch ($operator) {
+            switch ($operator)
+            {
                 case '+':
                     $answer = $this->summ($numbers[0][0], $numbers[0][1]);
                     break;
@@ -203,40 +151,20 @@ class Input
                     $answer = $this->division($numbers[0][0], $numbers[0][1]);
                     break;
             }
-            $visual = str_replace($match[0], $answer, $visual);
-            if (preg_match("/^\d+$/", $visual)) {
+            $matches = str_replace($match[0], $answer, $matches);
+            while(preg_match("/\-\-/", $matches))
+            {
+                $matches = preg_replace('/--/', '+', $matches);
+            }
+            if (preg_match("/^\-?\d+$/", $matches)) {
                 break;
             }
         }
-        return $visual;
-    }
-
-    public function setInt()
-    {
-        if (!empty($_POST['calc']))
-        {
-            $num = $_POST['calc'];
-            if (!empty($this->int))
-            {
-                $this->int .= $num;
-                return $this->int;
-            } else {
-                $this->int = $num;
-                return $this->int;
-            }
-        }
-        elseif (isset($_POST['reset']))
-        {
-            return $this->reset();
-        } else {
-            $this->int = 0;
-            return $this->int;
-        }
+        return $matches;
     }
 
     public function reset()
     {
-        $this->int = 0;
-        return $this->int;
+        return 0;
     }
 }

@@ -5,6 +5,9 @@ $int = null;
 if (!empty($_POST['text']) && isset($_POST['calc']))
 {
     $int = $num->parcing($_POST['text']);
+} elseif (isset($_POST['reset']))
+{
+    $int = $num->reset();
 }
 ?>
 
